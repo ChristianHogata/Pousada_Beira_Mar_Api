@@ -42,6 +42,7 @@ const ControllerRegisterUser = (router) => {
     router.post('/register', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         // Verifique se já existe um usuário com este e-mail
         const existingUser = yield model_Users_1.default.findOne({ email: req.body.email });
+        const email = existingUser === null || existingUser === void 0 ? void 0 : existingUser.email;
         if (existingUser) {
             // Se um usuário existente for encontrado, retorne um erro
             return res.status(400).send('E-mail já está cadastrado');
@@ -57,10 +58,21 @@ const ControllerRegisterUser = (router) => {
                 const newUser = new model_Users_1.default(Object.assign(Object.assign({}, req.body), { senha: hash }));
                 try {
                     // Salve a nova instância no banco de dados
-                    yield newUser.save();
+                    try {
+                        yield newUser.save();
+                    }
+                    catch (error) {
+                        console.error('Erro ao salvar o usuário:', error);
+                    }
                     // Envie o status HTTP 200
                     res.sendStatus(200);
-                    (0, ControllerEmail_1.default)(req.body.email);
+                    const MailOptions = {
+                        from: 'PousadaBeiraMar19022024@outlook.com',
+                        to: email,
+                        subject: 'Sua conta foi criada com sucesso!',
+                        text: 'Obrigado por se cadastrar em nosso site, esperamos vê-lo em breve!'
+                    };
+                    (0, ControllerEmail_1.default)({ mailOptions: MailOptions });
                 }
                 catch (error) {
                     // Trate qualquer erro que possa ocorrer

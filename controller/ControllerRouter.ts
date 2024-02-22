@@ -5,6 +5,8 @@ import ControllerFindMyReservation from './ControllerFindMyReservation';
 import ControllerLogin from './ControllerLogin';
 import ControllerRegisterUser from './ControllerRegisterUser';
 import ControllerReservation from './ControllerReservation';
+import ControllerRecoveryPassword from './ControllerRecoveryPassword';
+import ControllerResetPassword from './ControllerResetPassword';
 
 const ControllerRouter = () => {
     const router = express.Router();
@@ -14,7 +16,9 @@ const ControllerRouter = () => {
     ControllerFindMyReservation(router);
     ControllerLogin(router);
     ControllerRegisterUser(router); 
-    ControllerReservation(router); 
+    ControllerReservation(router);
+    ControllerRecoveryPassword(router); 
+    ControllerResetPassword(router);
 
     return router;
 }

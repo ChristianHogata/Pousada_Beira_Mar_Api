@@ -5,12 +5,13 @@ export interface IUser extends Document {
 }
 
 const UserSchema = new Schema({
-    _id: String,
     nome: String,
     sobrenome: String,
     email: String,
     telefone: String,
-    senha: String
+    senha: String,
+    resetPasswordExpires: { type: Schema.Types.Mixed, default: null },
+    resetPasswordToken: { type: String, default: '' }
 });
 
 export default mongoose.model('User', UserSchema, 'Users');

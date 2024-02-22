@@ -25,11 +25,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const UserSchema = new mongoose_1.Schema({
-    _id: String,
     nome: String,
     sobrenome: String,
     email: String,
     telefone: String,
-    senha: String
+    senha: String,
+    resetPasswordExpires: { type: mongoose_1.Schema.Types.Mixed, default: null },
+    resetPasswordToken: { type: String, default: '' }
 });
 exports.default = mongoose_1.default.model('User', UserSchema, 'Users');

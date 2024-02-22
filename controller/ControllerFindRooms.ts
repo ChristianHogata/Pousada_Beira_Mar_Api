@@ -26,7 +26,7 @@ const ControllerFindRooms = (router: any)=>{
     
         if (rooms) {
             return res.status(200).send(rooms);
-        exit;
+            exit;
         }
     
         res.sendStatus(404);

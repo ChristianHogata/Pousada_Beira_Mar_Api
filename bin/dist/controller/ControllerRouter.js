@@ -10,6 +10,8 @@ const ControllerFindMyReservation_1 = __importDefault(require("./ControllerFindM
 const ControllerLogin_1 = __importDefault(require("./ControllerLogin"));
 const ControllerRegisterUser_1 = __importDefault(require("./ControllerRegisterUser"));
 const ControllerReservation_1 = __importDefault(require("./ControllerReservation"));
+const ControllerRecoveryPassword_1 = __importDefault(require("./ControllerRecoveryPassword"));
+const ControllerResetPassword_1 = __importDefault(require("./ControllerResetPassword"));
 const ControllerRouter = () => {
     const router = express_1.default.Router();
     (0, ControllerFindRooms_1.default)(router);
@@ -18,6 +20,8 @@ const ControllerRouter = () => {
     (0, ControllerLogin_1.default)(router);
     (0, ControllerRegisterUser_1.default)(router);
     (0, ControllerReservation_1.default)(router);
+    (0, ControllerRecoveryPassword_1.default)(router);
+    (0, ControllerResetPassword_1.default)(router);
     return router;
 };
 exports.default = ControllerRouter;

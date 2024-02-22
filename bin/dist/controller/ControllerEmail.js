@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const nodemailer = __importStar(require("nodemailer"));
-const SendEmail = (Useremail) => {
+const SendEmail = (MailParams) => {
     const mailer = nodemailer.createTransport({
         host: "smtp-mail.outlook.com",
         port: 587,
@@ -37,13 +37,13 @@ const SendEmail = (Useremail) => {
             ciphers: 'SSLv3'
         }
     });
-    let mailOptions = {
-        from: 'PousadaBeiraMar19022024@outlook.com',
-        to: Useremail,
-        subject: 'Sua conta foi criada com sucesso!',
-        text: 'Obrigado por se cadastrar em nosso site, esperamos vê-lo em breve!'
-    };
-    mailer.sendMail(mailOptions, (error, info) => {
+    /* mailOptions = {
+       from: 'PousadaBeiraMar19022024@outlook.com',
+       to: Useremail,
+       subject: 'Sua conta foi criada com sucesso!',
+       text: 'Obrigado por se cadastrar em nosso site, esperamos vê-lo em breve!'
+     }; */
+    mailer.sendMail(MailParams.mailOptions, (error, info) => {
         if (error) {
             console.log(error);
         }

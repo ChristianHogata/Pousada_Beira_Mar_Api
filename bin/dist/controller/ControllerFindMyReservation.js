@@ -18,7 +18,6 @@ const ControllerToken_1 = __importDefault(require("./ControllerToken"));
 const ControllerFindMyReservation = (router) => {
     router.get('/myReservation', ControllerToken_1.default, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         const { idUser } = req.query;
-        console.log(idUser);
         const rooms = yield model_Reservation_1.default.find({ user: idUser });
         if (rooms) {
             return res.status(200).send(rooms);
