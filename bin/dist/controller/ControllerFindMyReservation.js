@@ -59,6 +59,7 @@ class ControllerFindMyReservation {
             }
             catch (error) {
                 console.log(error);
+                return res.sendStatus(500);
             }
         }));
     }
@@ -78,21 +79,3 @@ class ControllerFindMyReservation {
     ;
 }
 exports.default = ControllerFindMyReservation;
-/*const ControllerFindMyReservation = (router: any)=>{
-
-    router.get('/myReservation', ControllerToken, async (req: Request, res: Response, next: NextFunction) => {
-        const {idUser} = req.query;
-       
-        const rooms = await ModelFactory.new().getModelReservation().UseModel().find({user: idUser});
-    
-        if (rooms) {
-            return res.status(200).send(rooms);
-            exit;
-        }
-        
-        res.sendStatus(404);
-    });
-    return router;
-}
-
-export default ControllerFindMyReservation; */

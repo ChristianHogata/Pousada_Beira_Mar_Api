@@ -71,14 +71,13 @@ class ControllerCancelReservation {
                 }
                 const idRoom = req.body.idRoom;
                 const userId = req.body.loggedIn.user;
-                console.log('aqui2');
                 yield this._Model.UseModel().findOneAndUpdate({ _id: idRoom }, { $set: {
                         user: null,
                         initReservationDate: null,
                         endReservationDate: null
                     } }, { new: true });
                 yield this.SendEmail(userId);
-                res.sendStatus(200);
+                return res.sendStatus(200);
             }
             catch (error) {
                 console.log(error);
@@ -102,34 +101,3 @@ class ControllerCancelReservation {
     ;
 }
 exports.default = ControllerCancelReservation;
-/*
-const ControllerCancelReservation = (router: any)=>{
-
-    router.put('/myReservation/cancel', ControllerToken, async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const {idRoom} = req.query;
-         
-
-            const updatedRoom = await ModelFactory.new().getModelReservation().UseModel().findOneAndUpdate(
-                { _id: idRoom },
-                {$set: {
-                    user: null,
-                    initReservationDate: null,
-                    endReservationDate: null
-                }},
-                { new: true }
-            );
-    
-        res.sendStatus(200);
-
-        }
-        catch (error) {
-            res.sendStatus(500);
-        }
-    });
-
-    return router;
-}
-
-export default ControllerCancelReservation;
-*/

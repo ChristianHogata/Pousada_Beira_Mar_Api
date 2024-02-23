@@ -28,7 +28,7 @@ const SendEmail = (MailParams) => {
     const mailer = nodemailer.createTransport({
         host: "smtp-mail.outlook.com",
         port: 587,
-        secureConnection: false, // TLS requires secureConnection to be false
+        secureConnection: false,
         auth: {
             user: "PousadaBeiraMar19022024@outlook.com",
             pass: "PousadaBeiraMar2024"
