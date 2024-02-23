@@ -1,66 +1,107 @@
 import { Request, Response, NextFunction } from 'express';
-import modelUser from '../model/model.Users';
-import * as bcrypt from 'bcrypt';
-import SendEmail from './ControllerEmail';
+import ModelFactory from '../model/Factory/ModelFactory';
+import { IRouterParams, IRouters } from './Interfaces/ControllerInterface';
+import { IModel } from '../model/Interfaces/ModelInterfaces';
+import EncryptUtils from './Utils/Encrypt';
+import ControllerEmailFactory from './Factory/ControllerEmailFactory';
+import { exit } from 'process';
 
-const ControllerRegisterUser = (router: any)=>{
-    
-    router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
-        // Verifique se já existe um usuário com este e-mail
-        const existingUser = await modelUser.findOne({ email: req.body.email });
-        const email = existingUser?.email;
-    
-        if (existingUser) {
-        // Se um usuário existente for encontrado, retorne um erro
-            return res.status(400).send('E-mail já está cadastrado');
+
+class ControllerRegisterUser implements IRouterParams, IRouters{
+
+    private _authentic: boolean = false;
+    private _SendMail: boolean = false;
+    private _Router: any;
+    private _Model: IModel;
+    private _token: any;
+
+    constructor(){
+        this._Model = ModelFactory.new().getModelUsers();
+    }
+  
+    private async ExistUser(email: string){
+        return await ModelFactory.new().getModelUsers().UseModel().findOne({ email: email });
+    }
+
+    private async SendEmail(){
+
+        if(!this._SendMail){
+            exit;
         }
 
-    
-        // Criptografe a senha antes de salvar o usuário
-        bcrypt.hash(req.body.senha, 10, async function(err, hash) {
-        // Se ocorrer um erro durante a criptografia, retorne um erro
-        if (err) {
+        const user = await this._Model.UseModel().findOne({ token: this._token});
 
-            return res.status(500).send('Erro ao criptografar a senha');
-        }
+        ControllerEmailFactory
+        .new()
+        .setEmailParams()
+            .Setfrom('PousadaBeiraMar19022024@outlook.com')
+            .Setto(user.email)
+            .Setsubject('Sua conta foi criada com sucesso!')
+            .Settext('Obrigado por se cadastrar em nosso site, esperamos vê-lo em breve!')
+        ._EndParams()
+        .SendEmail()
+          
+    }
     
-        // Se nenhum usuário existente for encontrado, crie uma nova instância do seu modelo com os dados do req.body
-        const newUser = new modelUser({
-            ...req.body,
-            senha: hash,  // Substitua a senha em texto simples pela senha criptografada
-        });
-    
-        try {
-            // Salve a nova instância no banco de dados
+
+    setRouterParams(): IRouterParams{
+        return this;    
+    }
+
+    SetRouter(router:any): IRouterParams{
+        this._Router = router;
+        return this;
+    };
+
+    Exec(): void {
+        this._Router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
             try {
+
+                if (await this.ExistUser(req.body.email)) {
+                    return res.status(400).send('E-mail já está cadastrado');
+                }
+ 
+                const password = await EncryptUtils.encrypt(req.body.senha);
+         
+                if (!password) {
+                    return res.status(500).send('Erro ao criptografar a senha');
+                }
+ 
+
+                const User = this._Model.UseModel();
+
+                const newUser = new User({
+                    ...req.body,
+                    senha: password, 
+                });
+      
                 await newUser.save();
-            } 
-            catch (error) {
-                console.error('Erro ao salvar o usuário:', error);
-            }
+      
+                await this.SendEmail();
+
+                return res.sendStatus(200);
     
-            // Envie o status HTTP 200
-            res.sendStatus(200);
-
-            const MailOptions = {
-                from: 'PousadaBeiraMar19022024@outlook.com',
-                to: email,
-                subject: 'Sua conta foi criada com sucesso!',
-                text: 'Obrigado por se cadastrar em nosso site, esperamos vê-lo em breve!'    
             }
-
-            SendEmail({ mailOptions: MailOptions });
-
-        } 
-        catch (error) {
-            // Trate qualquer erro que possa ocorrer
-            res.sendStatus(500); // Envie o status HTTP 500 se ocorrer um erro
-        }
+            catch (error) {
+                console.log(error);
+                return res.sendStatus(500);
+            }
         });
-    });
+    }
+    
+    SetAuthentic(set: boolean): IRouterParams{
+        this._authentic = set;
+        return this;
+    };
 
-    return router;
-} 
+    SetSendMail(set: boolean): IRouterParams{
+        this._SendMail = set;
+        return this;
+    };
+
+    _EndParams(): IRouters {
+        return this;
+    };
+}
 
 export default ControllerRegisterUser;
-

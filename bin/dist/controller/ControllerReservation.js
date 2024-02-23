@@ -12,24 +12,120 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const model_Reservation_1 = __importDefault(require("../model/model.Reservation"));
-const ControllerToken_1 = __importDefault(require("./ControllerToken"));
-const ControllerReservation = (router) => {
-    router.post('/reservation/success', ControllerToken_1.default, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const ModelFactory_1 = __importDefault(require("../model/Factory/ModelFactory"));
+const Encrypt_1 = __importDefault(require("./Utils/Encrypt"));
+const ControllerEmailFactory_1 = __importDefault(require("./Factory/ControllerEmailFactory"));
+const process_1 = require("process");
+class ControllerReservation {
+    constructor() {
+        this._authentic = false;
+        this._SendMail = false;
+        this._token = '';
+        this._ModelReservation = ModelFactory_1.default.new().getModelReservation();
+    }
+    CheckToken() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (yield Encrypt_1.default.CheckToken(this._authentic, this._token)) {
+                    return true;
+                }
+                return false;
+            }
+            catch (err) {
+                console.error(err);
+            }
+        });
+    }
+    SendEmail(userId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this._SendMail) {
+                process_1.exit;
+            }
+            const user = yield ModelFactory_1.default.new().getModelUsers().get().UseModel().findOne({ _id: userId });
+            ControllerEmailFactory_1.default
+                .new()
+                .setEmailParams()
+                .Setfrom('PousadaBeiraMar19022024@outlook.com')
+                .Setto(user.email)
+                .Setsubject('Reserva realizada!')
+                .Settext('Sua reserva foi realizada com sucesso!')
+                ._EndParams()
+                .SendEmail();
+        });
+    }
+    setRouterParams() {
+        return this;
+    }
+    SetRouter(router) {
+        this._Router = router;
+        return this;
+    }
+    ;
+    Exec() {
+        this._Router.post('/reservation/success', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                this._token = ((_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1]) || '';
+                if (!this.CheckToken()) {
+                    return res.status(400).send('Invalid login or password');
+                }
+                const idRoom = req.body.idRoom;
+                const userId = req.body.loggedIn.user;
+                yield this._ModelReservation.UseModel().findOneAndUpdate({ _id: idRoom }, { $set: {
+                        user: userId,
+                        initReservationDate: req.body.initDate,
+                        endReservationDate: req.body.finishDate
+                    } }, { new: true });
+                yield this.SendEmail(userId);
+                return res.status(200).send(idRoom);
+            }
+            catch (error) {
+                return res.sendStatus(500);
+            }
+        }));
+    }
+    SetAuthentic(set) {
+        this._authentic = set;
+        return this;
+    }
+    ;
+    SetSendMail(set) {
+        this._SendMail = set;
+        return this;
+    }
+    ;
+    _EndParams() {
+        return this;
+    }
+    ;
+}
+exports.default = ControllerReservation;
+/*const ControllerReservation = (router: any)=>{
+
+    router.post('/reservation/success', ControllerToken, async (req: Request, res: Response, next: NextFunction) => {
         try {
             const idRoom = req.body.idRoom;
             const userId = req.body.userId;
-            const updatedRoom = yield model_Reservation_1.default.findOneAndUpdate({ _id: idRoom }, { $set: {
+     
+            const updatedRoom = await ModelFactory.new().getModelReservation().UseModel().findOneAndUpdate(
+                { _id: idRoom },
+                {$set: {
                     user: userId,
                     initReservationDate: req.body.initDate,
                     endReservationDate: req.body.finishDate
-                } }, { new: true });
+                }},
+                { new: true }
+            );
+        
             return res.status(200).send(idRoom);
+
         }
         catch (error) {
             res.sendStatus(500);
         }
-    }));
+    });
+
     return router;
-};
-exports.default = ControllerReservation;
+}
+
+export default ControllerReservation; */

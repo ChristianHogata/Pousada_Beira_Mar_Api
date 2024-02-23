@@ -24,14 +24,33 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const ReservationSchema = new mongoose_1.Schema({
-    img: String,
-    pousada: Number,
-    roomsName: String,
-    description: String,
-    personLimit: Number,
-    initReservationDate: Date,
-    endReservationDate: Date,
-    user: String
-});
-exports.default = mongoose_1.default.model('Reservation', ReservationSchema, 'ReservationRooms');
+class ModelReservation {
+    constructor() {
+        this.ReservationSchema = new mongoose_1.Schema({
+            img: String,
+            pousada: Number,
+            roomsName: String,
+            description: String,
+            personLimit: Number,
+            initReservationDate: Date,
+            endReservationDate: Date,
+            user: String
+        });
+        if (mongoose_1.default.models.Reservation) {
+            this.ReservationModel = mongoose_1.default.models.Reservation;
+        }
+        else {
+            this.ReservationModel = mongoose_1.default.model('Reservation', this.ReservationSchema, 'ReservationRooms');
+        }
+    }
+    get() {
+        return this;
+    }
+    UseModel() {
+        return this.ReservationModel;
+    }
+    static new() {
+        return new this;
+    }
+}
+exports.default = ModelReservation;

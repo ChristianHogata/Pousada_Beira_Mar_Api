@@ -12,28 +12,109 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const model_Reservation_1 = __importDefault(require("../model/model.Reservation"));
-const process_1 = require("process");
-const ControllerToken_1 = __importDefault(require("./ControllerToken"));
-const ControllerFindRooms = (router) => {
+const ModelFactory_1 = __importDefault(require("../model/Factory/ModelFactory"));
+const Encrypt_1 = __importDefault(require("./Utils/Encrypt"));
+class ControllerFindRooms {
+    constructor() {
+        this._authentic = false;
+        this._SendMail = false;
+        this._Model = ModelFactory_1.default.new().getModelReservation();
+    }
+    CheckToken() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (yield Encrypt_1.default.CheckToken(this._authentic, this._token)) {
+                    return true;
+                }
+                return false;
+            }
+            catch (err) {
+                console.error(err);
+            }
+        });
+    }
+    setRouterParams() {
+        return this;
+    }
+    SetRouter(router) {
+        this._Router = router;
+        return this;
+    }
+    ;
+    Exec() {
+        this._Router.get('/list', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                this._token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
+                if (!this.CheckToken()) {
+                    return res.status(400).send('Invalid login or password');
+                }
+                const { pousada, initReservationDate, endReservationDate } = req.query;
+                let startDate = (initReservationDate ? new Date(initReservationDate) : null);
+                let endDate = (endReservationDate ? new Date(endReservationDate) : null);
+                if (startDate && endDate) {
+                    const rooms = yield this._Model.UseModel().find(Object.assign({ pousada: Number(pousada) }, (startDate && endDate ? {
+                        $or: [
+                            { initReservationDate: { $gt: endDate } },
+                            { endReservationDate: { $lt: startDate } },
+                            { initReservationDate: null, endReservationDate: null }
+                        ]
+                    } : {})));
+                    return res.status(200).send(rooms);
+                }
+                return res.sendStatus(404);
+            }
+            catch (error) {
+                console.log(error);
+            }
+        }));
+    }
+    SetAuthentic(set) {
+        this._authentic = set;
+        return this;
+    }
+    ;
+    SetSendMail(set) {
+        this._SendMail = set;
+        return this;
+    }
+    ;
+    _EndParams() {
+        return this;
+    }
+    ;
+}
+exports.default = ControllerFindRooms;
+/*const ControllerFindRooms = (router: any)=>{
+    
     //const router = express.Router();
-    router.get('/list', ControllerToken_1.default, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-        const { pousada, initReservationDate, endReservationDate } = req.query;
+
+    router.get('/list', ControllerToken, async (req: Request, res: Response, next: NextFunction) => {
+        const {pousada, initReservationDate, endReservationDate } = req.query;
+        
         let startDate = typeof initReservationDate === 'string' ? new Date(initReservationDate) : undefined;
         let endDate = typeof endReservationDate === 'string' ? new Date(endReservationDate) : undefined;
-        const rooms = yield model_Reservation_1.default.find(Object.assign({ pousada: Number(pousada) }, (startDate && endDate ? {
+    
+        const rooms = await ModelFactory.new().getModelReservation().UseModel().find({
+        pousada: Number(pousada),
+        ...(startDate && endDate ? {
             $or: [
-                { initReservationDate: { $gt: endDate } },
-                { endReservationDate: { $lt: startDate } },
-                { initReservationDate: null, endReservationDate: null }
+            { initReservationDate: { $gt: endDate } },
+            { endReservationDate: { $lt: startDate } },
+            { initReservationDate: null, endReservationDate: null }
             ]
-        } : {})));
+        } : {})
+        });
+    
         if (rooms) {
             return res.status(200).send(rooms);
-            process_1.exit;
+            exit;
         }
+    
         res.sendStatus(404);
-    }));
+    });
+
     return router;
-};
-exports.default = ControllerFindRooms;
+}
+
+export default ControllerFindRooms; */

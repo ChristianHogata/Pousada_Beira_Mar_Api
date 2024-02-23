@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,64 +12,145 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const model_Users_1 = __importDefault(require("../model/model.Users"));
-const bcrypt = __importStar(require("bcrypt"));
-const ControllerResetPassword = (router) => {
-    router.post('/reset_password', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const ModelFactory_1 = __importDefault(require("../model/Factory/ModelFactory"));
+const Encrypt_1 = __importDefault(require("./Utils/Encrypt"));
+const ControllerEmailFactory_1 = __importDefault(require("./Factory/ControllerEmailFactory"));
+const process_1 = require("process");
+class ControllerResetPassword {
+    constructor() {
+        this._authentic = false;
+        this._SendMail = false;
+        this._Model = ModelFactory_1.default.new().getModelUsers();
+    }
+    SendEmail(email) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this._SendMail) {
+                process_1.exit;
+            }
+            ControllerEmailFactory_1.default
+                .new()
+                .setEmailParams()
+                .Setfrom('PousadaBeiraMar19022024@outlook.com')
+                .Setto(email)
+                .Setsubject('Senha alterada com sucesso!')
+                .Settext(`Sua senha foi redefinida com sucesso!`)
+                ._EndParams()
+                .SendEmail();
+        });
+    }
+    setRouterParams() {
+        return this;
+    }
+    SetRouter(router) {
+        this._Router = router;
+        return this;
+    }
+    ;
+    Exec() {
+        this._Router.post('/reset_password', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const user = yield this._Model.UseModel().findOne({ resetPasswordToken: req.body.token });
+                const token = user.resetPasswordToken;
+                const password = yield Encrypt_1.default.encrypt(req.body.password);
+                let currentDate = new Date();
+                if (!user) {
+                    return res.status(400).send('Invalid email');
+                }
+                if ((user.resetPasswordExpires) && (!currentDate.getTime() > user.resetPasswordExpires.getTime())) {
+                    return res.status(400).send('Token expirado!');
+                }
+                yield ModelFactory_1.default.new().getModelUsers().UseModel().findOneAndUpdate({ resetPasswordToken: token }, { $set: {
+                        resetPasswordToken: '',
+                        resetPasswordExpires: null,
+                        senha: password
+                    } }, { new: true });
+                this.SendEmail(user.email);
+                res.sendStatus(200);
+            }
+            catch (error) {
+                return res.status(400).send('Falha ao recuperar a senha');
+            }
+        }));
+    }
+    SetAuthentic(set) {
+        this._authentic = set;
+        return this;
+    }
+    ;
+    SetSendMail(set) {
+        this._SendMail = set;
+        return this;
+    }
+    ;
+    _EndParams() {
+        return this;
+    }
+    ;
+}
+exports.default = ControllerResetPassword;
+/*const ControllerResetPassword = (router: any)=>{
+
+    router.post('/reset_password', async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const user = yield model_Users_1.default.findOne({ resetPasswordToken: req.body.token });
-            const email = user === null || user === void 0 ? void 0 : user.email;
-            const token = user === null || user === void 0 ? void 0 : user.resetPasswordToken;
-            const resetPasswordExpires = user === null || user === void 0 ? void 0 : user.resetPasswordExpires;
+
+            const user = await ModelFactory.new().getModelUsers().UseModel().findOne({ resetPasswordToken: req.body.token });
+            const email = user?.email;
+            const token = user?.resetPasswordToken;
+   
             let currentDate = new Date();
+
             if (!user) {
                 return res.status(400).send('Invalid login or password');
             }
+
+
             // Verifica se a data de expiração do token já passou
-            if (resetPasswordExpires) {
-                console.log(resetPasswordExpires);
-                try {
-                    if (currentDate.getTime() > resetPasswordExpires.getTime()) {
-                        bcrypt.hash(req.body.password, 10, function (err, hash) {
-                            return __awaiter(this, void 0, void 0, function* () {
-                                // Se ocorrer um erro durante a criptografia, retorne um erro
-                                if (err) {
-                                    return res.status(500).send('Erro ao criptografar a senha');
-                                }
-                                try {
-                                    const updatedUser = yield model_Users_1.default.findOneAndUpdate({ resetPasswordToken: token }, { $set: {
-                                            resetPasswordToken: '',
-                                            resetPasswordExpires: null,
-                                            senha: hash
-                                        } }, { new: true });
-                                }
-                                catch (error) {
-                                    console.error('Erro ao redefinir senha:', error);
-                                }
-                            });
-                        });
+           
+            if(currentDate.getTime() > user.resetPasswordExpires.getTime()) {
+                
+                bcrypt.hash(req.body.password, 10, async function(err, hash) {
+                    // Se ocorrer um erro durante a criptografia, retorne um erro
+                    if (err) {
+            
+                        return res.status(500).send('Erro ao criptografar a senha');
                     }
-                }
-                catch (error) {
-                    console.log(error);
-                }
+                    
+                    try {
+                        const updatedUser = await ModelFactory.new().getModelUsers().UseModel().findOneAndUpdate(
+                            { resetPasswordToken: token},
+                            {$set: {
+                                resetPasswordToken: '',
+                                resetPasswordExpires: null,
+                                senha: hash
+                            }},
+                            { new: true }
+                        );
+                    }
+                    catch (error) {
+                        console.error('Erro ao redefinir senha:', error);
+                    }
+                });
             }
-            else {
-                return res.status(500).send('Erro ao redefinir a senha');
-            }
+
             const MailOptions = {
                 from: 'PousadaBeiraMar19022024@outlook.com',
                 to: email,
                 subject: 'Senha alterada com sucesso!',
                 text: `Sua senha foi redefinida com sucesso!`
-            };
-            //  SendEmail({ mailOptions: MailOptions });
+            }
+
+            SendEmail({ mailOptions: MailOptions });
+
+
             res.sendStatus(200);
+
         }
         catch (error) {
             res.sendStatus(500);
         }
-    }));
+    });
+
     return router;
-};
-exports.default = ControllerResetPassword;
+}
+
+export default ControllerResetPassword; */

@@ -37,12 +37,6 @@ const SendEmail = (MailParams) => {
             ciphers: 'SSLv3'
         }
     });
-    /* mailOptions = {
-       from: 'PousadaBeiraMar19022024@outlook.com',
-       to: Useremail,
-       subject: 'Sua conta foi criada com sucesso!',
-       text: 'Obrigado por se cadastrar em nosso site, esperamos vê-lo em breve!'
-     }; */
     mailer.sendMail(MailParams.mailOptions, (error, info) => {
         if (error) {
             console.log(error);

@@ -24,13 +24,32 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const UserSchema = new mongoose_1.Schema({
-    nome: String,
-    sobrenome: String,
-    email: String,
-    telefone: String,
-    senha: String,
-    resetPasswordExpires: { type: mongoose_1.Schema.Types.Mixed, default: null },
-    resetPasswordToken: { type: String, default: '' }
-});
-exports.default = mongoose_1.default.model('User', UserSchema, 'Users');
+class ModelUser {
+    constructor() {
+        this.UserSchema = new mongoose_1.Schema({
+            nome: String,
+            sobrenome: String,
+            email: String,
+            telefone: String,
+            senha: String,
+            resetPasswordExpires: { type: mongoose_1.Schema.Types.Mixed, default: null },
+            resetPasswordToken: { type: String, default: '' }
+        });
+        if (mongoose_1.default.models.User) {
+            this.UserModel = mongoose_1.default.models.User;
+        }
+        else {
+            this.UserModel = mongoose_1.default.model('User', this.UserSchema, 'Users');
+        }
+    }
+    get() {
+        return this;
+    }
+    UseModel() {
+        return this.UserModel;
+    }
+    static new() {
+        return new this;
+    }
+}
+exports.default = ModelUser;

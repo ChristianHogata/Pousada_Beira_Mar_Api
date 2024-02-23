@@ -1,38 +1,97 @@
 import { Request, Response, NextFunction } from 'express';
-import modelReservation from '../model/model.Reservation';
-import { exit } from 'process';
-import ControllerToken from './ControllerToken';
+import ModelFactory from '../model/Factory/ModelFactory';
+import { IRouterParams, IRouters } from './Interfaces/ControllerInterface';
+import { IModel } from '../model/Interfaces/ModelInterfaces';
+import EncryptUtils from './Utils/Encrypt';
 
-const ControllerFindRooms = (router: any)=>{
-    
-    //const router = express.Router();
+class ControllerFindRooms implements IRouterParams, IRouters{
 
-    router.get('/list', ControllerToken, async (req: Request, res: Response, next: NextFunction) => {
-        const {pousada, initReservationDate, endReservationDate } = req.query;
-        
-        let startDate = typeof initReservationDate === 'string' ? new Date(initReservationDate) : undefined;
-        let endDate = typeof endReservationDate === 'string' ? new Date(endReservationDate) : undefined;
-    
-        const rooms = await modelReservation.find({
-        pousada: Number(pousada),
-        ...(startDate && endDate ? {
-            $or: [
-            { initReservationDate: { $gt: endDate } },
-            { endReservationDate: { $lt: startDate } },
-            { initReservationDate: null, endReservationDate: null }
-            ]
-        } : {})
-        });
-    
-        if (rooms) {
-            return res.status(200).send(rooms);
-            exit;
+    private _authentic: boolean = false;
+    private _SendMail: boolean = false;
+    private _Router: any;
+    private _Model: IModel;
+    private _token: any;
+
+    constructor(){
+        this._Model = ModelFactory.new().getModelReservation();
+    }
+
+    private async CheckToken(){
+        try {
+            if(await EncryptUtils.CheckToken(this._authentic, this._token)){
+                return true;
+            }
+            
+            return false;
+        } 
+        catch (err) {
+            console.error(err);
         }
+    }
     
-        res.sendStatus(404);
-    });
+    setRouterParams(): IRouterParams{
+        return this;    
+    }
 
-    return router;
+    SetRouter(router:any): IRouterParams{
+        this._Router = router;
+        return this;
+    };
+
+    Exec(): void {
+        this._Router.get('/list', async (req: Request, res: Response, next: NextFunction) => {
+            try {
+                this._token = req.headers.authorization?.split(' ')[1]; 
+
+                if (!this.CheckToken()) {
+                    return res.status(400).send('Invalid login or password');
+                }
+              
+
+                const {pousada, initReservationDate, endReservationDate } = req.query;
+
+                let startDate = (initReservationDate ? new Date(initReservationDate as string) : null);
+                let endDate = (endReservationDate ? new Date(endReservationDate as string) : null);
+                
+                if (startDate && endDate) {
+                    const rooms = 
+                    await this._Model.UseModel().find({
+                        pousada: Number(pousada),
+                        ...(startDate && endDate ? {
+                            $or: [
+                                { initReservationDate: { $gt: endDate } },
+                                { endReservationDate: { $lt: startDate } },
+                                { initReservationDate: null, endReservationDate: null }
+                            ]
+                        } : {})
+                    });
+
+                    return res.status(200).send(rooms);
+                }
+
+                return res.sendStatus(404);   
+            } 
+            catch (error) {
+                console.log(error);
+                return res.sendStatus(500);
+            }               
+        });   
+    }
+    
+    SetAuthentic(set: boolean): IRouterParams{
+        this._authentic = set;
+        return this;
+    };
+
+    SetSendMail(set: boolean): IRouterParams{
+        this._SendMail = set;
+        return this;
+    };
+
+    _EndParams(): IRouters {
+        return this;
+    };
+
 }
 
 export default ControllerFindRooms;

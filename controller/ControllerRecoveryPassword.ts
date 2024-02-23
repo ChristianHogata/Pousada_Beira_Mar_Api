@@ -1,64 +1,97 @@
 import { Request, Response, NextFunction } from 'express';
-import modelUsers from '../model/model.Users';
-import ControllerToken from './ControllerToken';
-import crypto from 'crypto';
-import SendEmail from './ControllerEmail';
-
-const ControllerRecoveryPassword = (router: any)=>{
-
-    router.post('/RecoveryPassword', async (req: Request, res: Response, next: NextFunction) => {
-        try {
-
-            const user = await modelUsers.findOne({ email: req.body.login });
-            const email = user?.email;
-            let token: string = '';
-            let currentDate = new Date();
-            
-
-            if (!user) {
-                return res.status(400).send('Invalid login or password');
-            }       
-
-            // Verifica se a data de expiração do token já passou
-            if(currentDate.getTime() > user.resetPasswordExpires.getTime()) {
-                token = crypto.randomBytes(20).toString('hex');
-                
-                user.resetPasswordToken = token;
-                user.resetPasswordExpires = new Date(Date.now() + 3600000); 
-
-                try {
-                    await user.save();
-                } 
-                catch (error) {
-                    console.error('Erro ao salvar o usuário:', error);
-                }
-            } else {
-                token = user.resetPasswordToken;
-            }       
+import ModelFactory from '../model/Factory/ModelFactory';
+import { IRouterParams, IRouters } from './Interfaces/ControllerInterface';
+import { IModel } from '../model/Interfaces/ModelInterfaces';
+import EncryptUtils from './Utils/Encrypt';
+import ControllerEmailFactory from './Factory/ControllerEmailFactory';
+import { exit } from 'process';
 
 
-            const link = `http://localhost:8082/reset_password?token=${token}`;
+class ControllerRecoveryPassword implements IRouterParams, IRouters{
 
-            const MailOptions = {
-                from: 'PousadaBeiraMar19022024@outlook.com',
-                to: email,
-                subject: 'Solicitação de redefinição de senha',
-                text: `Sua solicitação de redefinição de senha foi recebida. Por favor, clique no link a seguir para redefinir sua senha: ${link}`   
-            }
+    private _authentic: boolean = false;
+    private _SendMail: boolean = false;
+    private _Router: any;
+    private _Model: IModel;
+    private _token: any;
 
-            SendEmail({ mailOptions: MailOptions });
+    constructor(){
+        this._Model = ModelFactory.new().getModelUsers();
+    }
 
+    private async SendEmail(email: string, token: string){
+        
+        const link = `http://localhost:8082/reset_password?token=${token}`;
 
-            res.sendStatus(200);
-
-        } 
-        catch (error) {
-            res.sendStatus(500); 
+        if(!this._SendMail){
+            exit;
         }
-    });
 
-    return router;
+        ControllerEmailFactory
+        .new()
+        .setEmailParams()
+            .Setfrom('PousadaBeiraMar19022024@outlook.com')
+            .Setto(email)
+            .Setsubject('Solicitação de redefinição de senha')
+            .Settext(`Sua solicitação de redefinição de senha foi recebida. Por favor, clique no link a seguir para redefinir sua senha: ${link}`)
+        ._EndParams()
+        .SendEmail()
+            
+    }
+
+    setRouterParams(): IRouterParams{
+        return this;    
+    }
+
+    SetRouter(router:any): IRouterParams{
+        this._Router = router;
+        return this;
+    };
+
+    Exec(): void {
+        this._Router.post('/RecoveryPassword', async (req: Request, res: Response, next: NextFunction) => {
+            try {
+           
+                const user = await this._Model.UseModel().findOne({ email: req.body.login });
+                let currentDate = new Date();
+                           
+                if (!user) {
+                    return res.status(400).send('Invalid email');
+                }           
+
+                if((user.resetPasswordExpires) && (!currentDate.getTime() > user.resetPasswordExpires.getTime())) {      
+                    return res.status(400).send('Token expirado!');    
+                }
+          
+                const token = user.resetPasswordToken = await EncryptUtils.RandomToken();
+                user.resetPasswordExpires = new Date(Date.now() + 3600000); 
+            
+                await user.save();
+          
+                await this.SendEmail(req.body.login, token);
+
+                return res.status(200);
+            } 
+            catch (error) {
+                console.log(error);
+                return res.status(500).send('Falha ao recuperar a senha');
+            }               
+        });   
+    }
+    
+    SetAuthentic(set: boolean): IRouterParams{
+        this._authentic = set;
+        return this;
+    };
+
+    SetSendMail(set: boolean): IRouterParams{
+        this._SendMail = set;
+        return this;
+    };
+
+    _EndParams(): IRouters {
+        return this;
+    };
 }
 
 export default ControllerRecoveryPassword;
-
