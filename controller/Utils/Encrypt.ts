@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import ModelFactory from '../../model/Factory/ModelFactory';
+import ControllerModelFactory from '../Factory/ControllerModelFactory';
 import crypto from 'crypto';
 
 class EncryptUtils { 
@@ -34,7 +34,7 @@ class EncryptUtils {
                 reject(false);
             }
     
-            const user = await ModelFactory.new().getModelUsers().UseModel().findOne({ token: token });
+            const user = await ControllerModelFactory.new().ModelUser().UseModel().findOne({ token: token });
     
             if (!user) {
                 reject(false);

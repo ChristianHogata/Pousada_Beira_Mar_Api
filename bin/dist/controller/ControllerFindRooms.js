@@ -12,13 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ModelFactory_1 = __importDefault(require("../model/Factory/ModelFactory"));
+const ControllerModelFactory_1 = __importDefault(require("./Factory/ControllerModelFactory"));
 const Encrypt_1 = __importDefault(require("./Utils/Encrypt"));
 class ControllerFindRooms {
     constructor() {
         this._authentic = false;
         this._SendMail = false;
-        this._Model = ModelFactory_1.default.new().getModelReservation();
+        this._Model = ControllerModelFactory_1.default.new().ModelReservation();
     }
     CheckToken() {
         return __awaiter(this, void 0, void 0, function* () {

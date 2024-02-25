@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import Jwt from 'jsonwebtoken';
 import {IRouters, IRouterParams} from './Interfaces/ControllerInterface'
 import { IModel } from '../model/Interfaces/ModelInterfaces';
-import ModelFactory from '../model/Factory/ModelFactory';
+import ControllerModelFactory from './Factory/ControllerModelFactory';
 import EncryptUtils from './Utils/Encrypt';
 
 
@@ -15,7 +15,7 @@ class ControllerLogin implements IRouterParams, IRouters{
     private _token: any;
 
     constructor(){
-        this._Model = ModelFactory.new().getModelUsers();
+        this._Model = ControllerModelFactory.new().ModelUser();
     }
 
     private async CheckPassword(password1: string, password2: string){

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import ModelFactory from '../model/Factory/ModelFactory';
+import ControllerModelFactory from './Factory/ControllerModelFactory';
 import { IRouterParams, IRouters } from './Interfaces/ControllerInterface';
 import { IModel } from '../model/Interfaces/ModelInterfaces';
 import EncryptUtils from './Utils/Encrypt';
@@ -16,7 +16,7 @@ class ControllerCancelReservation implements IRouterParams, IRouters{
     private _token: string = '';
 
     constructor(){
-        this._Model = ModelFactory.new().getModelReservation();
+        this._Model = ControllerModelFactory.new().ModelUser();
     }
 
     private async CheckToken(){
@@ -37,7 +37,7 @@ class ControllerCancelReservation implements IRouterParams, IRouters{
             exit;
         }
 
-        const user = await ModelFactory.new().getModelUsers().get().UseModel().findOne({_id: userId});
+        const user = await ControllerModelFactory.new().ModelUser().get().UseModel().findOne({_id: userId});
 
         ControllerEmailFactory
         .new()

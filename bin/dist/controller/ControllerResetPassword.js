@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ModelFactory_1 = __importDefault(require("../model/Factory/ModelFactory"));
+const ControllerModelFactory_1 = __importDefault(require("./Factory/ControllerModelFactory"));
 const Encrypt_1 = __importDefault(require("./Utils/Encrypt"));
 const ControllerEmailFactory_1 = __importDefault(require("./Factory/ControllerEmailFactory"));
 const process_1 = require("process");
@@ -20,7 +20,7 @@ class ControllerResetPassword {
     constructor() {
         this._authentic = false;
         this._SendMail = false;
-        this._Model = ModelFactory_1.default.new().getModelUsers();
+        this._Model = ControllerModelFactory_1.default.new().ModelUser();
     }
     SendEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -59,7 +59,7 @@ class ControllerResetPassword {
                 if ((user.resetPasswordExpires) && (!currentDate.getTime() > user.resetPasswordExpires.getTime())) {
                     return res.status(400).send('Token expirado!');
                 }
-                yield ModelFactory_1.default.new().getModelUsers().UseModel().findOneAndUpdate({ resetPasswordToken: token }, { $set: {
+                yield ControllerModelFactory_1.default.new().ModelUser().UseModel().findOneAndUpdate({ resetPasswordToken: token }, { $set: {
                         resetPasswordToken: '',
                         resetPasswordExpires: null,
                         senha: password

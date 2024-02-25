@@ -13,13 +13,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const ModelFactory_1 = __importDefault(require("../model/Factory/ModelFactory"));
+const ControllerModelFactory_1 = __importDefault(require("./Factory/ControllerModelFactory"));
 const Encrypt_1 = __importDefault(require("./Utils/Encrypt"));
 class ControllerLogin {
     constructor() {
         this._authentic = false;
         this._SendMail = false;
-        this._Model = ModelFactory_1.default.new().getModelUsers();
+        this._Model = ControllerModelFactory_1.default.new().ModelUser();
     }
     CheckPassword(password1, password2) {
         return __awaiter(this, void 0, void 0, function* () {

@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const bcrypt = __importStar(require("bcrypt"));
-const ModelFactory_1 = __importDefault(require("../../model/Factory/ModelFactory"));
+const ControllerModelFactory_1 = __importDefault(require("../Factory/ControllerModelFactory"));
 const crypto_1 = __importDefault(require("crypto"));
 class EncryptUtils {
     static encrypt(word) {
@@ -68,7 +68,7 @@ class EncryptUtils {
             if (!check) {
                 reject(false);
             }
-            const user = yield ModelFactory_1.default.new().getModelUsers().UseModel().findOne({ token: token });
+            const user = yield ControllerModelFactory_1.default.new().ModelUser().UseModel().findOne({ token: token });
             if (!user) {
                 reject(false);
             }

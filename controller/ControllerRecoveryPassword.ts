@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import ModelFactory from '../model/Factory/ModelFactory';
+import ControllerModelFactory from './Factory/ControllerModelFactory';
 import { IRouterParams, IRouters } from './Interfaces/ControllerInterface';
 import { IModel } from '../model/Interfaces/ModelInterfaces';
 import EncryptUtils from './Utils/Encrypt';
@@ -16,7 +16,7 @@ class ControllerRecoveryPassword implements IRouterParams, IRouters{
     private _token: any;
 
     constructor(){
-        this._Model = ModelFactory.new().getModelUsers();
+        this._Model = ControllerModelFactory.new().ModelUser();
     }
 
     private async SendEmail(email: string, token: string){

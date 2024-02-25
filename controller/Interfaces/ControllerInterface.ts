@@ -1,3 +1,5 @@
+import { IModel } from "../../model/Interfaces/ModelInterfaces";
+
 export interface IRouters{
     setRouterParams(): IRouterParams;
     Exec(): void;
@@ -21,4 +23,9 @@ export interface emailParams{
     Setsubject(subject: string): emailParams,
     Settext(text: string): emailParams
     _EndParams(): emailFactory
+}
+
+export interface IControllerModelFactory{
+    ModelUser(): IModel;
+    ModelReservation(): IModel;
 }
