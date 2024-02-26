@@ -30,8 +30,8 @@ const SendEmail = (MailParams) => {
         port: 587,
         secureConnection: false,
         auth: {
-            user: "PousadaBeiraMar19022024@outlook.com",
-            pass: "PousadaBeiraMar2024"
+            user: "PousadaBeiraMar2024@outlook.com",
+            pass: "PousadaBeiraMar"
         },
         tls: {
             ciphers: 'SSLv3'
@@ -40,9 +40,11 @@ const SendEmail = (MailParams) => {
     mailer.sendMail(MailParams.mailOptions, (error, info) => {
         if (error) {
             console.log(error);
+            return false;
         }
         else {
             console.log('Email enviado: ' + info);
+            return true;
         }
     });
 };

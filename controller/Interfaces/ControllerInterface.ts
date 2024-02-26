@@ -14,7 +14,7 @@ export interface IRouterParams{
 
 export interface emailFactory{
     setEmailParams(): emailParams;
-    SendEmail(): void;
+    SendEmail(): Promise<boolean>;
 }
 
 export interface emailParams{

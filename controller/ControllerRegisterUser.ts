@@ -23,23 +23,29 @@ class ControllerRegisterUser implements IRouterParams, IRouters{
         return await ControllerModelFactory.new().ModelUser().UseModel().findOne({ email: email });
     }
 
-    private async SendEmail(){
+    private async SendEmail(email: string){
 
         if(!this._SendMail){
-            exit;
+            return false
         }
 
-        const user = await this._Model.UseModel().findOne({ token: this._token});
+        const response =
+            await ControllerEmailFactory
+            .new()
+            .setEmailParams()
+                .Setfrom('PousadaBeiraMar2024@outlook.com')
+                .Setto(email)
+                .Setsubject('Sua conta foi criada com sucesso!')
+                .Settext('Obrigado por se cadastrar em nosso site, esperamos vê-lo em breve!')
+            ._EndParams()
+            .SendEmail()
 
-        ControllerEmailFactory
-        .new()
-        .setEmailParams()
-            .Setfrom('PousadaBeiraMar19022024@outlook.com')
-            .Setto(user.email)
-            .Setsubject('Sua conta foi criada com sucesso!')
-            .Settext('Obrigado por se cadastrar em nosso site, esperamos vê-lo em breve!')
-        ._EndParams()
-        .SendEmail()
+        if(response){
+            return true;
+        }
+        else{
+            return false;
+        }
           
     }
     
@@ -68,18 +74,22 @@ class ControllerRegisterUser implements IRouterParams, IRouters{
                 }
  
 
-                const User = this._Model.UseModel();
+                if(await this.SendEmail(req.body.email)){
 
-                const newUser = new User({
-                    ...req.body,
-                    senha: password, 
-                });
-      
-                await newUser.save();
-      
-                await this.SendEmail();
+                    const User = this._Model.UseModel();
 
-                return res.sendStatus(200);
+                    const newUser = new User({
+                        ...req.body,
+                        senha: password, 
+                    });
+      
+                    await newUser.save();
+
+                    return res.sendStatus(200);
+                }
+                else{
+                    return res.sendStatus(500);
+                }
     
             }
             catch (error) {

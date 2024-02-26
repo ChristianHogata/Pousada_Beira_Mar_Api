@@ -1,5 +1,6 @@
 import { emailParams, emailFactory } from "../Interfaces/ControllerInterface";
-import SendEmail from "../ControllerEmail";
+import * as nodemailer from 'nodemailer';
+import { TransportOptions } from 'nodemailer';
 
 class ControllerEmailFactory implements emailFactory, emailParams{
     
@@ -19,19 +20,39 @@ class ControllerEmailFactory implements emailFactory, emailParams{
         return this;
     };
 
-    SendEmail(): void{
+    SendEmail(): Promise<boolean>{
 
         this._MailOptions.from = this._from;
         this._MailOptions.to = this._to;
         this._MailOptions.subject = this._subject;
         this._MailOptions.text = this._text;
-        
-        try {
-            SendEmail({ mailOptions: this._MailOptions });    
-        } 
-        catch (error) {
-            console.log(error);    
-        }     
+
+        const mailer = nodemailer.createTransport({
+            host: "smtp-mail.outlook.com",
+            port: 587,
+            secureConnection: false, 
+            auth: {
+              user: "PousadaBeiraMar2024@outlook.com",
+              pass: "PousadaBeiraMar"
+            },
+            tls: {
+              ciphers:'SSLv3'
+            }
+        } as TransportOptions);
+
+        return new Promise(async (resolve, reject) => {
+
+            mailer.sendMail( this._MailOptions, (error, info)=>{
+                if (error) {
+                    console.log(error);
+                    reject(false);
+                } 
+                else {
+                    console.log('Email enviado: ' + info);
+                    resolve(true);
+                }
+            });
+        })
     };
     
     Setfrom(from: string): emailParams{

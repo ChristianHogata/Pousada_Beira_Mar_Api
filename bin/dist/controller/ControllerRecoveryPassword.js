@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ControllerModelFactory_1 = __importDefault(require("./Factory/ControllerModelFactory"));
 const Encrypt_1 = __importDefault(require("./Utils/Encrypt"));
 const ControllerEmailFactory_1 = __importDefault(require("./Factory/ControllerEmailFactory"));
-const process_1 = require("process");
 class ControllerRecoveryPassword {
     constructor() {
         this._authentic = false;
@@ -24,19 +23,25 @@ class ControllerRecoveryPassword {
     }
     SendEmail(email, token) {
         return __awaiter(this, void 0, void 0, function* () {
-            const link = `http://localhost:8082/reset_password?token=${token}`;
+            const link = `http://localhost:3000/reset_password?token=${token}`;
             if (!this._SendMail) {
-                process_1.exit;
+                return false;
             }
-            ControllerEmailFactory_1.default
+            const response = yield ControllerEmailFactory_1.default
                 .new()
                 .setEmailParams()
-                .Setfrom('PousadaBeiraMar19022024@outlook.com')
+                .Setfrom('PousadaBeiraMar2024@outlook.com')
                 .Setto(email)
                 .Setsubject('Solicitação de redefinição de senha')
                 .Settext(`Sua solicitação de redefinição de senha foi recebida. Por favor, clique no link a seguir para redefinir sua senha: ${link}`)
                 ._EndParams()
                 .SendEmail();
+            if (response) {
+                return true;
+            }
+            else {
+                return false;
+            }
         });
     }
     setRouterParams() {
@@ -58,14 +63,19 @@ class ControllerRecoveryPassword {
                 if ((user.resetPasswordExpires) && (!currentDate.getTime() > user.resetPasswordExpires.getTime())) {
                     return res.status(400).send('Token expirado!');
                 }
-                const token = user.resetPasswordToken = yield Encrypt_1.default.RandomToken();
-                user.resetPasswordExpires = new Date(Date.now() + 3600000);
-                yield user.save();
-                yield this.SendEmail(req.body.login, token);
-                return res.status(200);
+                const token = yield Encrypt_1.default.RandomToken();
+                if (yield this.SendEmail(req.body.login, token)) {
+                    yield this._Model.UseModel().findOneAndUpdate({ email: req.body.login }, { $set: {
+                            resetPasswordExpires: new Date(Date.now() + 3600000),
+                            resetPasswordToken: token
+                        } }, { new: true });
+                    return res.sendStatus(200);
+                }
+                else {
+                    return res.status(500).send('Falha ao recuperar a senha');
+                }
             }
             catch (error) {
-                console.log(error);
                 return res.status(500).send('Falha ao recuperar a senha');
             }
         }));

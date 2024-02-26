@@ -21,22 +21,30 @@ class ControllerRecoveryPassword implements IRouterParams, IRouters{
 
     private async SendEmail(email: string, token: string){
         
-        const link = `http://localhost:8082/reset_password?token=${token}`;
-
+        const link = `http://localhost:3000/reset_password?token=${token}`;
+   
         if(!this._SendMail){
-            exit;
+            return false
         }
 
-        ControllerEmailFactory
-        .new()
-        .setEmailParams()
-            .Setfrom('PousadaBeiraMar19022024@outlook.com')
-            .Setto(email)
-            .Setsubject('Solicitação de redefinição de senha')
-            .Settext(`Sua solicitação de redefinição de senha foi recebida. Por favor, clique no link a seguir para redefinir sua senha: ${link}`)
-        ._EndParams()
-        .SendEmail()
-            
+        
+        const response =
+            await ControllerEmailFactory
+            .new()
+            .setEmailParams()
+                .Setfrom('PousadaBeiraMar2024@outlook.com')
+                .Setto(email)
+                .Setsubject('Solicitação de redefinição de senha')
+                .Settext(`Sua solicitação de redefinição de senha foi recebida. Por favor, clique no link a seguir para redefinir sua senha: ${link}`)
+            ._EndParams()
+            .SendEmail()   
+        
+        if(response){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     setRouterParams(): IRouterParams{
@@ -63,17 +71,27 @@ class ControllerRecoveryPassword implements IRouterParams, IRouters{
                     return res.status(400).send('Token expirado!');    
                 }
           
-                const token = user.resetPasswordToken = await EncryptUtils.RandomToken();
-                user.resetPasswordExpires = new Date(Date.now() + 3600000); 
-            
-                await user.save();
+                const token = await EncryptUtils.RandomToken();         
           
-                await this.SendEmail(req.body.login, token);
+                if(await this.SendEmail(req.body.login, token)){
 
-                return res.status(200);
+                    await this._Model.UseModel().findOneAndUpdate(
+                        { email: req.body.login },
+                        {$set: { 
+                            resetPasswordExpires: new Date(Date.now() + 3600000),
+                            resetPasswordToken: token
+                        }},
+                        { new: true } 
+                    );
+
+                    return res.sendStatus(200); 
+                }
+                else{
+                    return res.status(500).send('Falha ao recuperar a senha'); 
+                }
+                
             } 
             catch (error) {
-                console.log(error);
                 return res.status(500).send('Falha ao recuperar a senha');
             }               
         });   

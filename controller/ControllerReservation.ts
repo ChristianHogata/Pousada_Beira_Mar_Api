@@ -34,23 +34,30 @@ class ControllerReservation implements IRouterParams, IRouters{
     private async SendEmail(userId: any){
 
         if(!this._SendMail){
-            exit;
+            return false
         }
 
         const user = await ControllerModelFactory.new().ModelUser().get().UseModel().findOne({_id: userId});
      
-        ControllerEmailFactory
-        .new()
-        .setEmailParams()
-            .Setfrom('PousadaBeiraMar19022024@outlook.com')
-            .Setto(user.email)
-            .Setsubject('Reserva realizada!')
-            .Settext('Sua reserva foi realizada com sucesso!')
-        ._EndParams()
-        .SendEmail()
+        const response =
+            await ControllerEmailFactory
+            .new()
+            .setEmailParams()
+                .Setfrom('PousadaBeiraMar2024@outlook.com')
+                .Setto(user.email)
+                .Setsubject('Reserva realizada!')
+                .Settext('Sua reserva foi realizada com sucesso!')
+            ._EndParams()
+            .SendEmail()
+        
+        if(response){
+            return true;
+        }
+        else{
+            return false;
+        }
           
     }
-    
 
     setRouterParams(): IRouterParams{
         return this;    
@@ -73,19 +80,24 @@ class ControllerReservation implements IRouterParams, IRouters{
                 const idRoom = req.body.idRoom;
                 const userId = req.body.loggedIn.user;
      
-                await this._ModelReservation.UseModel().findOneAndUpdate(
-                    { _id: idRoom },
-                    {$set: { 
-                        user: userId,
-                        initReservationDate: req.body.initDate,
-                        endReservationDate: req.body.finishDate
-                    }},
-                    { new: true } 
-                );
 
-                await this.SendEmail(userId);
+                if(await this.SendEmail(userId)){
 
-                return res.status(200).send(idRoom);
+                    await this._ModelReservation.UseModel().findOneAndUpdate(
+                        { _id: idRoom },
+                        {$set: { 
+                            user: userId,
+                            initReservationDate: req.body.initDate,
+                            endReservationDate: req.body.finishDate
+                        }},
+                        { new: true } 
+                    );
+
+                    return res.status(200).send(idRoom);
+                }
+                else{
+                    return res.sendStatus(500);
+                }
             
             } 
             catch (error) {

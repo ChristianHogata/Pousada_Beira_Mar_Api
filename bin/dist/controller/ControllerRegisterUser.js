@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ControllerModelFactory_1 = __importDefault(require("./Factory/ControllerModelFactory"));
 const Encrypt_1 = __importDefault(require("./Utils/Encrypt"));
 const ControllerEmailFactory_1 = __importDefault(require("./Factory/ControllerEmailFactory"));
-const process_1 = require("process");
 class ControllerRegisterUser {
     constructor() {
         this._authentic = false;
@@ -27,21 +26,26 @@ class ControllerRegisterUser {
             return yield ControllerModelFactory_1.default.new().ModelUser().UseModel().findOne({ email: email });
         });
     }
-    SendEmail() {
+    SendEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this._SendMail) {
-                process_1.exit;
+                return false;
             }
-            const user = yield this._Model.UseModel().findOne({ token: this._token });
-            ControllerEmailFactory_1.default
+            const response = yield ControllerEmailFactory_1.default
                 .new()
                 .setEmailParams()
-                .Setfrom('PousadaBeiraMar19022024@outlook.com')
-                .Setto(user.email)
+                .Setfrom('PousadaBeiraMar2024@outlook.com')
+                .Setto(email)
                 .Setsubject('Sua conta foi criada com sucesso!')
                 .Settext('Obrigado por se cadastrar em nosso site, esperamos vê-lo em breve!')
                 ._EndParams()
                 .SendEmail();
+            if (response) {
+                return true;
+            }
+            else {
+                return false;
+            }
         });
     }
     setRouterParams() {
@@ -62,11 +66,15 @@ class ControllerRegisterUser {
                 if (!password) {
                     return res.status(500).send('Erro ao criptografar a senha');
                 }
-                const User = this._Model.UseModel();
-                const newUser = new User(Object.assign(Object.assign({}, req.body), { senha: password }));
-                yield newUser.save();
-                yield this.SendEmail();
-                return res.sendStatus(200);
+                if (yield this.SendEmail(req.body.email)) {
+                    const User = this._Model.UseModel();
+                    const newUser = new User(Object.assign(Object.assign({}, req.body), { senha: password }));
+                    yield newUser.save();
+                    return res.sendStatus(200);
+                }
+                else {
+                    return res.sendStatus(500);
+                }
             }
             catch (error) {
                 console.log(error);

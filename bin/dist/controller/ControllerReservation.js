@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ControllerModelFactory_1 = __importDefault(require("./Factory/ControllerModelFactory"));
 const Encrypt_1 = __importDefault(require("./Utils/Encrypt"));
 const ControllerEmailFactory_1 = __importDefault(require("./Factory/ControllerEmailFactory"));
-const process_1 = require("process");
 class ControllerReservation {
     constructor() {
         this._authentic = false;
@@ -39,18 +38,24 @@ class ControllerReservation {
     SendEmail(userId) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this._SendMail) {
-                process_1.exit;
+                return false;
             }
             const user = yield ControllerModelFactory_1.default.new().ModelUser().get().UseModel().findOne({ _id: userId });
-            ControllerEmailFactory_1.default
+            const response = yield ControllerEmailFactory_1.default
                 .new()
                 .setEmailParams()
-                .Setfrom('PousadaBeiraMar19022024@outlook.com')
+                .Setfrom('PousadaBeiraMar2024@outlook.com')
                 .Setto(user.email)
                 .Setsubject('Reserva realizada!')
                 .Settext('Sua reserva foi realizada com sucesso!')
                 ._EndParams()
                 .SendEmail();
+            if (response) {
+                return true;
+            }
+            else {
+                return false;
+            }
         });
     }
     setRouterParams() {
@@ -71,13 +76,17 @@ class ControllerReservation {
                 }
                 const idRoom = req.body.idRoom;
                 const userId = req.body.loggedIn.user;
-                yield this._ModelReservation.UseModel().findOneAndUpdate({ _id: idRoom }, { $set: {
-                        user: userId,
-                        initReservationDate: req.body.initDate,
-                        endReservationDate: req.body.finishDate
-                    } }, { new: true });
-                yield this.SendEmail(userId);
-                return res.status(200).send(idRoom);
+                if (yield this.SendEmail(userId)) {
+                    yield this._ModelReservation.UseModel().findOneAndUpdate({ _id: idRoom }, { $set: {
+                            user: userId,
+                            initReservationDate: req.body.initDate,
+                            endReservationDate: req.body.finishDate
+                        } }, { new: true });
+                    return res.status(200).send(idRoom);
+                }
+                else {
+                    return res.sendStatus(500);
+                }
             }
             catch (error) {
                 console.log(error);

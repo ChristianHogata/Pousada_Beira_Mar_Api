@@ -21,20 +21,28 @@ class ControllerResetPassword implements IRouterParams, IRouters{
     private async SendEmail(email: string){
 
         if(!this._SendMail){
-            exit;
+            return false;
         }
+        
+        const response =
+            await ControllerEmailFactory
+            .new()
+            .setEmailParams()
+                .Setfrom('PousadaBeiraMar2024@outlook.com')
+                .Setto(email)
+                .Setsubject('Senha alterada com sucesso!')
+                .Settext(`Sua senha foi redefinida com sucesso!`)
+            ._EndParams()
+            .SendEmail()
 
-        ControllerEmailFactory
-        .new()
-        .setEmailParams()
-            .Setfrom('PousadaBeiraMar19022024@outlook.com')
-            .Setto(email)
-            .Setsubject('Senha alterada com sucesso!')
-            .Settext(`Sua senha foi redefinida com sucesso!`)
-        ._EndParams()
-        .SendEmail()
+        if(response){
+            return true;
+        }
+        else{
+            return false;
+        }
             
-    }
+    }  
 
     setRouterParams(): IRouterParams{
         return this;    
@@ -49,6 +57,11 @@ class ControllerResetPassword implements IRouterParams, IRouters{
         this._Router.post('/reset_password', async (req: Request, res: Response, next: NextFunction) => {
             try {
                 const user = await this._Model.UseModel().findOne({ resetPasswordToken: req.body.token});
+            
+                if(!user.resetPasswordToken){
+                    return res.status(400).send('Não foi solicitado alteração de senha');    
+                }
+
                 const token = user.resetPasswordToken;
                 const password = await EncryptUtils.encrypt(req.body.password);
                 let currentDate = new Date();
@@ -60,20 +73,25 @@ class ControllerResetPassword implements IRouterParams, IRouters{
                 if((user.resetPasswordExpires) && (!currentDate.getTime() > user.resetPasswordExpires.getTime())) {      
                     return res.status(400).send('Token expirado!');    
                 }
-
-                await ControllerModelFactory.new().ModelUser().UseModel().findOneAndUpdate(
-                    { resetPasswordToken: token}, 
-                    {$set: { 
-                        resetPasswordToken: '',
-                        resetPasswordExpires: null,
-                        senha: password
-                    }}, 
-                    { new: true }
-                );
-            
-                this.SendEmail(user.email);
-
-                return res.sendStatus(200);        
+                      
+                if(await this.SendEmail(user.email)){
+                   
+                    await ControllerModelFactory.new().ModelUser().UseModel().findOneAndUpdate(
+                        { resetPasswordToken: token}, 
+                        {$set: { 
+                            resetPasswordToken: '',
+                            resetPasswordExpires: null,
+                            senha: password
+                        }}, 
+                        { new: true }
+                    );
+      
+                    return res.sendStatus(200); 
+                }
+                else{
+                    return res.status(500).send('Falha ao recuperar a senha'); 
+                }  
+                     
             } 
             catch (error) {
                 console.log(error);

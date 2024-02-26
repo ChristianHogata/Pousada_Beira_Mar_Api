@@ -16,7 +16,7 @@ class ControllerCancelReservation implements IRouterParams, IRouters{
     private _token: string = '';
 
     constructor(){
-        this._Model = ControllerModelFactory.new().ModelUser();
+        this._Model = ControllerModelFactory.new().ModelReservation();
     }
 
     private async CheckToken(){
@@ -34,20 +34,28 @@ class ControllerCancelReservation implements IRouterParams, IRouters{
     private async SendEmail(userId: string){
 
         if(!this._SendMail){
-            exit;
+            return false
         }
 
         const user = await ControllerModelFactory.new().ModelUser().get().UseModel().findOne({_id: userId});
 
-        ControllerEmailFactory
-        .new()
-        .setEmailParams()
-            .Setfrom('PousadaBeiraMar19022024@outlook.com')
-            .Setto(user.email)
-            .Setsubject('Reserva cancelada!')
-            .Settext('Sua reserva foi cancelada com sucesso!')
-        ._EndParams()
-        .SendEmail()
+        const response =
+            await ControllerEmailFactory
+            .new()
+            .setEmailParams()
+                .Setfrom('PousadaBeiraMar2024@outlook.com')
+                .Setto(user.email)
+                .Setsubject('Reserva cancelada!')
+                .Settext('Sua reserva foi cancelada com sucesso!')
+            ._EndParams()
+            .SendEmail()
+
+        if(response){
+            return true;
+        }
+        else{
+            return false;
+        }
             
     }
     
@@ -73,20 +81,24 @@ class ControllerCancelReservation implements IRouterParams, IRouters{
     
                 const idRoom = req.body.idRoom;
                 const userId = req.body.loggedIn.user;
+                               
+                if(await this.SendEmail(userId)){
 
-                await this._Model.UseModel().findOneAndUpdate(
-                    { _id: idRoom }, 
-                    {$set: { 
-                        user: null,
-                        initReservationDate: null,
-                        endReservationDate: null
-                    }}, 
-                    { new: true }
-                );   
-         
-                await this.SendEmail(userId);
-        
-                return res.sendStatus(200); 
+                    await this._Model.UseModel().findOneAndUpdate(
+                        { _id: idRoom }, 
+                        {$set: { 
+                            user: null,
+                            initReservationDate: null,
+                            endReservationDate: null
+                        }}, 
+                        { new: true }
+                    );   
+                    
+                    return res.sendStatus(200);
+                }
+                else{
+                    return res.sendStatus(500);
+                }
             } 
             catch (error) {
                 console.log(error);
